@@ -1,0 +1,251 @@
+<!doctype html><html lang='th'><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NightShift Life v0.6</title>
+<style>
+:root{--bg:#0b0f14;--card:#121923;--card2:#0e151e;--text:#f4f7fb;--muted:#9aa7b6;--line:#25303d;--accent:#6ee7b7;--warn:#fbbf24;--danger:#fb7185}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:760px;margin:auto;padding:16px 14px 90px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.brand{font-size:22px;font-weight:900}.sub{font-size:12px;color:var(--muted)} .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.hero{padding:18px;background:linear-gradient(145deg,#121923,#0e151e)} .hero h1{margin:0 0 5px;font-size:23px}.hero p{margin:0;color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.field span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--text)}
+.btn{border:1px solid var(--line);background:var(--card2);color:var(--text);padding:10px 12px;border-radius:11px;font-weight:800;cursor:pointer}.btn.primary{background:var(--accent);color:#062217;border-color:transparent}.btn.small{padding:7px 9px;font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.section-title{display:flex;justify-content:space-between;align-items:center;font-weight:900;margin-bottom:10px}.muted{color:var(--muted);font-size:12px}
+.status{font-size:13px;line-height:1.5;padding:11px;border-radius:13px;border:1px solid var(--line);background:var(--card2)}
+.status.good{border-color:#2c6f59}.status.warn{border-color:#775c18}.status.bad{border-color:#7d3040}
+.kpi{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}.kpi small{display:block;color:var(--muted);font-size:10px}.kpi b{display:block;font-size:18px;margin-top:3px}
+.progress{height:9px;background:var(--line);border-radius:999px;overflow:hidden}.bar{height:100%;width:0;background:var(--accent);transition:width .25s}.progress-line{margin:10px 0}.progress-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}.task:last-child{border-bottom:0}.task .time{min-width:54px;font-weight:900}.task .txt{flex:1}.task .note{font-size:11px;color:var(--muted);margin-top:2px}
+.pill{display:inline-block;padding:3px 7px;border-radius:999px;border:1px solid var(--line);font-size:10px;color:var(--muted);margin-left:4px}
+.tabs{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(760px,100%);display:flex;background:#0d141cdd;border-top:1px solid var(--line);backdrop-filter:blur(12px);z-index:10}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:11px 4px;font-size:11px}.tabs button.active{color:var(--accent);font-weight:900}
+.page{display:none}.page.active{display:block}.log-row{display:grid;grid-template-columns:1fr 90px 90px auto;gap:7px;margin:7px 0}.log-row input{width:100%;padding:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:9px}
+.empty{color:var(--muted);font-size:12px;padding:12px 0}.danger{color:var(--danger)} .accent{color:var(--accent)}
+@media(max-width:520px){.grid3{grid-template-columns:1fr 1fr}.log-row{grid-template-columns:1fr 70px 70px auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">NightShift Life</div><div class="sub">ชีวิตกะกลางคืน • เวอร์ชันพร้อมใช้</div></div>
+    <button class="btn small" onclick="openSettings()">⚙️ ตั้งค่า</button>
+  </div>
+
+  <section class="hero card">
+    <h1 id="nowTitle">กำลังโหลด...</h1>
+    <p id="nowSub">กำลังคำนวณสถานะจากเวลาของคุณ</p>
+    <div class="grid3" style="margin-top:14px">
+      <div class="kpi"><small>น้ำหนัก</small><b id="heroWeight">105 kg</b></div>
+      <div class="kpi"><small>เป้าหมาย</small><b id="heroTarget">75 kg</b></div>
+      <div class="kpi"><small>งบวันนี้</small><b id="heroBudget">100 ฿</b></div>
+    </div>
+  </section>
+
+  <section id="today" class="page active">
+    <div class="card">
+      <div class="section-title"><span>🎯 ตอนนี้ควรทำอะไร</span><span class="muted" id="phaseBadge">—</span></div>
+      <div id="nextAction" class="status">กำลังคำนวณ...</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span>📊 สถานะวันนี้</span><span class="muted" id="todayDate"></span></div>
+      <div class="grid3">
+        <div class="kpi"><small>พลังงาน</small><b id="kCal">0</b></div>
+        <div class="kpi"><small>โปรตีน</small><b id="kProtein">0 g</b></div>
+        <div class="kpi"><small>ค่าอาหาร</small><b id="kCost">0 ฿</b></div>
+      </div>
+      <div class="progress-line"><div class="progress-head"><span>พลังงาน</span><span id="calText">0 / 2,200</span></div><div class="progress"><div id="calBar" class="bar"></div></div></div>
+      <div class="progress-line"><div class="progress-head"><span>โปรตีน</span><span id="proteinText">0 / 120 g</span></div><div class="progress"><div id="proteinBar" class="bar"></div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span>🍱 เพิ่มอาหารมื้อถัดไป</span><span class="muted">กรอกประมาณการได้</span></div>
+      <div class="log-row">
+        <input id="foodName" placeholder="เช่น ข้าว + ไก่ + ไข่">
+        <input id="foodCal" type="number" min="0" placeholder="kcal">
+        <input id="foodProtein" type="number" min="0" placeholder="โปรตีน">
+        <button class="btn primary small" onclick="addFood()">เพิ่ม</button>
+      </div>
+      <div class="log-row">
+        <input id="foodCost" type="number" min="0" placeholder="บาท">
+        <div></div><div></div>
+        <button class="btn small" onclick="clearFoodInputs()">ล้าง</button>
+      </div>
+      <div id="foodList"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span>💧/🚶 Quick Actions</span><span class="muted">ไม่ต้องทำทุกอย่าง</span></div>
+      <div class="row">
+        <button class="btn" onclick="quick('water')">💧 ดื่มน้ำ</button>
+        <button class="btn" onclick="quick('walk')">🚶 เดิน 10 นาที</button>
+        <button class="btn" onclick="quick('sleep')">😴 เตรียมนอน</button>
+      </div>
+      <div id="quickStatus" class="muted" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span>🗓️ วันนี้</span><span class="muted">ตารางจากกะงาน</span></div>
+      <div id="scheduleList"></div>
+    </div>
+  </section>
+
+  <section id="food" class="page">
+    <div class="card">
+      <div class="section-title"><span>🍚 บันทึกอาหาร</span><span class="muted">ข้อมูลอยู่ในเครื่อง</span></div>
+      <div id="foodPageList"></div>
+    </div>
+  </section>
+
+  <section id="progress" class="page">
+    <div class="card">
+      <div class="section-title"><span>⚖️ น้ำหนัก</span><span class="muted">บันทึกด้วยตัวเอง</span></div>
+      <div class="log-row"><input id="weightInput" type="number" step="0.1" placeholder="น้ำหนัก kg"><div></div><div></div><button class="btn primary small" onclick="addWeight()">บันทึก</button></div>
+      <div id="weightList"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span>🏁 ระยะถึงเป้าหมาย</span><span class="muted" id="goalText"></span></div>
+      <div class="progress"><div id="goalBar" class="bar"></div></div>
+    </div>
+  </section>
+
+  <section id="settings" class="page">
+    <div class="card">
+      <div class="section-title"><span>⚙️ ตั้งค่าชีวิต</span><span class="muted">ปรับตามกะจริง</span></div>
+      <div class="grid2">
+        <label class="field"><span>ตื่น</span><input id="sWake" type="time"></label>
+        <label class="field"><span>เริ่มงาน</span><input id="sWorkStart" type="time"></label>
+        <label class="field"><span>เลิกงาน</span><input id="sWorkEnd" type="time"></label>
+        <label class="field"><span>เข้านอน</span><input id="sSleep" type="time"></label>
+        <label class="field"><span>น้ำหนักปัจจุบัน</span><input id="sWeight" type="number" step="0.1"></label>
+        <label class="field"><span>เป้าหมาย</span><input id="sTarget" type="number" step="0.1"></label>
+        <label class="field"><span>งบอาหาร/วัน</span><input id="sBudget" type="number" step="1"></label>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveSettings()">บันทึก</button><button class="btn" onclick="exportData()">ส่งออกข้อมูล</button><button class="btn" onclick="importData()">นำเข้าข้อมูล</button></div>
+      <input id="importFile" type="file" accept=".json" style="display:none" onchange="handleImport(event)">
+      <div class="muted" style="margin-top:10px">หมายเหตุ: เป้าพลังงานเป็นค่าประมาณสำหรับการวางแผน ไม่ใช่คำสั่งทางการแพทย์</div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button class="active" onclick="showPage('today',this)">🏠<br>วันนี้</button>
+  <button onclick="showPage('food',this)">🍱<br>อาหาร</button>
+  <button onclick="showPage('progress',this)">📈<br>ความคืบหน้า</button>
+  <button onclick="showPage('settings',this)">⚙️<br>ตั้งค่า</button>
+</nav>
+
+<script>
+const KEY="nightshift_life_v06";
+const defaultState={
+  settings:{wake:"21:00",workStart:"22:00",workEnd:"07:00",sleep:"09:00",weight:105,target:75,budget:100},
+  foods:[],weights:[],quick:{water:0,walk:0,sleep:0}
+};
+let state=loadState();
+
+function loadState(){try{return Object.assign({},defaultState,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){return structuredClone(defaultState)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function todayFoods(){return state.foods.filter(x=>x.date===todayKey())}
+function todayWeights(){return state.weights.filter(x=>x.date===todayKey())}
+function n(x){return Number(x)||0}
+function mins(t){const [h,m]=t.split(":").map(Number);return h*60+m}
+function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes()}
+function between(t,a,b){let x=mins(t),s=mins(a),e=mins(b);return s<=e?x>=s&&x<e:(x>=s||x<e)}
+function fmtDate(){return new Date().toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long"})}
+function targetCal(){
+  const w=n(state.settings.weight)||105;
+  return Math.max(1600,Math.min(2600,Math.round(2200-Math.max(0,w-90)*8)));
+}
+function proteinMin(){return Math.max(110,Math.round((n(state.settings.weight)||105)*1.15))}
+function summary(){
+  const f=todayFoods();
+  return {cal:f.reduce((a,x)=>a+n(x.cal),0),protein:f.reduce((a,x)=>a+n(x.protein),0),cost:f.reduce((a,x)=>a+n(x.cost),0)}
+}
+function currentPhase(){
+  const s=state.settings, t=nowMins();
+  if(between(fmtTime(t),s.workStart,s.workEnd)) return ["ทำงาน","อยู่กะงาน","work"];
+  if(between(fmtTime(t),s.sleep, s.wake)) return ["พัก/นอน","ช่วงพัก","sleep"];
+  return ["เวลาส่วนตัว","กิน/เตรียมตัว","free"];
+}
+function fmtTime(m){return String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0")}
+function schedule(){
+  const s=state.settings;
+  return [
+    [s.wake,"ตื่น + น้ำ 1 แก้ว","เริ่มวันแบบไม่รีบ"],
+    [addTime(s.wake,30),"มื้อหลัก","โปรตีนก่อน แล้วค่อยเติมข้าว/ผัก/ผลไม้"],
+    [s.workStart,"เริ่มงาน","พกน้ำและลดเครื่องดื่มหวาน"],
+    [addTime(s.workStart,180),"เช็กความหิว","หิวจริงค่อยกิน snack ที่มีโปรตีน"],
+    [addTime(s.workStart,300),"มื้อหลัก 2","กินให้อิ่มพอดี ไม่ต้องอดชดเชย"],
+    [s.workEnd,"เลิกงาน","ถ้าหิว: มื้อเล็กเน้นโปรตีน"],
+    [addTime(s.sleep,-30),"เตรียมนอน","ลดแสง/หน้าจอและคาเฟอีน"],
+    [s.sleep,"นอน","พยายามรักษาเวลาให้สม่ำเสมอ"]
+  ]
+}
+function addTime(t,d){return fmtTime((mins(t)+d+1440)%1440)}
+function phaseAction(){
+  const s=state.settings, t=nowMins(), sum=summary(), calT=targetCal(), pT=proteinMin();
+  if(between(fmtTime(t),s.sleep,s.wake)) return ["😴 ตอนนี้ควรพัก","ถ้าใกล้เวลานอน ให้หลีกเลี่ยงมื้อใหญ่และคาเฟอีน","good"];
+  if(between(fmtTime(t),s.workStart,s.workEnd)){
+    if(sum.protein<pT*.6) return ["💪 หาโปรตีนก่อน","ถ้าหิวที่ร้าน ให้เลือกไข่/ไก่/ปลา/นมโปรตีนสูงเป็นตัวหลัก","warn"];
+    if(sum.cal>calT*1.1) return ["💧 ดื่มน้ำก่อน","พลังงานวันนี้ค่อนข้างสูงแล้ว มื้อต่อไปเลือกโปรตีน + ผัก/ผลไม้ และงดน้ำหวาน","warn"];
+    return ["🧃 อยู่กะงานให้รอดแบบไม่หลุด","ดื่มน้ำเรื่อย ๆ และใช้กติกา “โปรตีนก่อน ข้าวพอดี ขนมทีหลัง”","good"];
+  }
+  if(sum.cal===0) return ["🍱 เตรียมมื้อแรก","ยังไม่มีอาหารที่บันทึกวันนี้ เริ่มจากมื้อที่มีโปรตีนเป็นหลัก","warn"];
+  if(sum.protein<pT*.7) return ["🥚 เติมโปรตีน","โปรตีนยังต่ำเมื่อเทียบกับเป้า มื้อต่อไปเลือกไข่/ไก่/ปลา","warn"];
+  if(sum.cost>n(s.budget)) return ["💰 คุมงบ","งบเกินแล้ว มื้อถัดไปเลือกเมนูเรียบง่ายและคุ้มโปรตีน","warn"];
+  return ["✅ ทำต่อแบบเดิม","วันนี้กำลังอยู่ในทางที่ดี ไม่จำเป็นต้องทำให้สมบูรณ์ทุกมื้อ","good"];
+}
+function render(){
+  const s=state.settings, sum=summary(), c=targetCal(), p=proteinMin(), phase=currentPhase(), act=phaseAction();
+  document.getElementById("nowTitle").textContent=act[0];
+  document.getElementById("nowSub").textContent=`${fmtDate()} • เวลา ${new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}`;
+  document.getElementById("phaseBadge").textContent=phase[0];
+  document.getElementById("nextAction").className="status "+act[2];
+  document.getElementById("nextAction").innerHTML=`<b>${act[0]}</b><br>${act[1]}`;
+  document.getElementById("todayDate").textContent=fmtDate();
+  document.getElementById("heroWeight").textContent=(n(s.weight)||105)+" kg";
+  document.getElementById("heroTarget").textContent=(n(s.target)||75)+" kg";
+  document.getElementById("heroBudget").textContent=(n(s.budget)||100)+" ฿";
+  document.getElementById("kCal").textContent=Math.round(sum.cal)+" kcal";
+  document.getElementById("kProtein").textContent=Math.round(sum.protein)+" g";
+  document.getElementById("kCost").textContent=Math.round(sum.cost)+" ฿";
+  document.getElementById("calText").textContent=`${Math.round(sum.cal)} / ${c} kcal`;
+  document.getElementById("proteinText").textContent=`${Math.round(sum.protein)} / ${p} g`;
+  document.getElementById("calBar").style.width=Math.min(100,sum.cal/c*100)+"%";
+  document.getElementById("proteinBar").style.width=Math.min(100,sum.protein/p*100)+"%";
+  document.getElementById("scheduleList").innerHTML=schedule().map(x=>`<div class="task"><div class="time">${x[0]}</div><div class="txt"><b>${x[1]}</b><div class="note">${x[2]}</div></div></div>`).join("");
+  const foods=todayFoods();
+  const foodHtml=foods.length?foods.map((x,i)=>`<div class="task"><div class="time">${x.time}</div><div class="txt"><b>${esc(x.name)}</b><div class="note">${x.cal} kcal • ${x.protein} g protein • ${x.cost} ฿</div></div><button class="btn small" onclick="deleteFood('${x.id}')">ลบ</button></div>`).join(""):`<div class="empty">ยังไม่มีรายการอาหารวันนี้</div>`;
+  document.getElementById("foodList").innerHTML=foodHtml;
+  document.getElementById("foodPageList").innerHTML=foodHtml;
+  const ws=state.weights.slice().reverse();
+  document.getElementById("weightList").innerHTML=ws.length?ws.map(x=>`<div class="task"><div class="time">${x.date}</div><div class="txt"><b>${x.weight} kg</b></div><button class="btn small" onclick="deleteWeight('${x.id}')">ลบ</button></div>`).join(""):`<div class="empty">ยังไม่มีประวัติน้ำหนัก</div>`;
+  const totalStart=n(state.settings.weight)||105,totalTarget=n(state.settings.target)||75,cur=totalStart;
+  const latest=state.weights.length?state.weights[state.weights.length-1].weight:cur;
+  const pct=totalStart===totalTarget?100:Math.max(0,Math.min(100,(totalStart-latest)/(totalStart-totalTarget)*100));
+  document.getElementById("goalText").textContent=`${latest} → ${totalTarget} kg`;
+  document.getElementById("goalBar").style.width=pct+"%";
+  document.getElementById("quickStatus").textContent=`วันนี้: 💧 ${state.quick.water} • 🚶 ${state.quick.walk} • 😴 ${state.quick.sleep}`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function addFood(){
+  const name=document.getElementById("foodName").value.trim(); if(!name)return;
+  state.foods.push({id:crypto.randomUUID(),date:todayKey(),time:new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}),name,cal:n(document.getElementById("foodCal").value),protein:n(document.getElementById("foodProtein").value),cost:n(document.getElementById("foodCost").value)});
+  save();clearFoodInputs();render();
+}
+function clearFoodInputs(){["foodName","foodCal","foodProtein","foodCost"].forEach(id=>document.getElementById(id).value="")}
+function deleteFood(id){state.foods=state.foods.filter(x=>x.id!==id);save();render()}
+function addWeight(){const w=n(document.getElementById("weightInput").value);if(!w)return;state.weights.push({id:crypto.randomUUID(),date:todayKey(),weight:w});state.settings.weight=w;save();document.getElementById("weightInput").value="";render()}
+function deleteWeight(id){state.weights=state.weights.filter(x=>x.id!==id);save();render()}
+function quick(type){state.quick[type]++;save();render()}
+function showPage(id,btn){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active")}
+function openSettings(){showPage("settings",document.querySelectorAll(".tabs button")[3])}
+function fillSettings(){const s=state.settings;for(const [id,key] of [["sWake","wake"],["sWorkStart","workStart"],["sWorkEnd","workEnd"],["sSleep","sleep"],["sWeight","weight"],["sTarget","target"],["sBudget","budget"]])document.getElementById(id).value=s[key]}
+function saveSettings(){state.settings={wake:document.getElementById("sWake").value||"21:00",workStart:document.getElementById("sWorkStart").value||"22:00",workEnd:document.getElementById("sWorkEnd").value||"07:00",sleep:document.getElementById("sSleep").value||"09:00",weight:n(document.getElementById("sWeight").value)||105,target:n(document.getElementById("sTarget").value)||75,budget:n(document.getElementById("sBudget").value)||100};save();render();alert("บันทึกการตั้งค่าแล้ว")}
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nightshift-life-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+function importData(){document.getElementById("importFile").click()}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);save();fillSettings();render();alert("นำเข้าข้อมูลแล้ว")}catch(err){alert("ไฟล์ไม่ถูกต้อง")}};r.readAsText(f)}
+fillSettings();render();setInterval(render,60000);
+</script>
+</body>
+</html>
